@@ -34,9 +34,10 @@ const ExplodingImage: React.FC = () => {
     let shrinkingDone = false;
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    const shrinkDuration = 500;
-    const explodeDuration = 1200;
+    const shrinkDuration = 700;
+    const explodeDuration = 1500;
     const fallDuration = 500;
+    // const fallDuration = 0;
 
     let startTime: number | null = null;
 

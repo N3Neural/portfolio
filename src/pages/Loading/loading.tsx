@@ -1,23 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import ExplodingImage from "./shrink";
 import MatrixOutlineWord from "./matrix";
 
-const Sequence: React.FC = () => {
-  const [showMatrix, setShowMatrix] = useState(false);
-  const [showExplosion, setShowExplosion] = useState(true);
+interface SequenceProps {
+  showExplosion?: boolean;
+  showMatrix?: boolean;
+}
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowMatrix(true);
-      setShowExplosion(false);
-    }, 2100);
-    return () => clearTimeout(timer);
-  }, []);
-
+const Sequence: React.FC<SequenceProps> = ({ showExplosion = true, showMatrix = false }) => {
   return (
     <div style={{ backgroundColor: "#000", width: "100vw", height: "100vh", position: "relative" }}>
-      {showExplosion && <ExplodingImage />}
-      {showMatrix && <MatrixOutlineWord />}
+      {showExplosion && !showMatrix && <ExplodingImage />}
+      {showMatrix && !showExplosion && <MatrixOutlineWord />}
     </div>
   );
 };
