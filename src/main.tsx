@@ -9,15 +9,16 @@ function FluidCanvas() {
     const canvas = document.getElementById("fluid-canvas")
     if (!canvas) return
 
+    const gui = document.createElement("script")
+    gui.src = "/dat.gui.min.js"
+    gui.async = true
+    document.body.appendChild(gui)
+
     const script = document.createElement("script")
     script.src = "/script.js"
     script.async = true
     document.body.appendChild(script)
 
-    const gui = document.createElement("script")
-    gui.src = "/dat.gui.min.js"
-    gui.async = true
-    document.body.appendChild(gui)
 
     return () => {
       if (document.body.contains(script)) document.body.removeChild(script)
@@ -40,6 +41,23 @@ function FluidCanvas() {
     />
   )
 }
+
+// function FluidCanvas() {
+//   return (
+//     <canvas
+//       id="fluid-canvas"
+//       style={{
+//         width: "100%",
+//         height: "100%",
+//         position: "fixed",
+//         top: 0,
+//         left: 0,
+//         zIndex: 0,
+//         cursor: "none",
+//       }}
+//     />
+//   );
+// }
 
 const DotCursor = () => {
   const [position, setPosition] = useState({ x: -100, y: -100 })
