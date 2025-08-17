@@ -14,3 +14,12 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+#fluid-canvas {
+  pointer-events: auto; /* capture cursor */
+  cursor: default !important;
+}
+#root > div {
+  background: transparent !important; /* don’t hide canvas */
+  pointer-events: none;              /* don’t block mouse */
+}
