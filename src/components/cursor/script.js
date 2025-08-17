@@ -1199,7 +1199,7 @@ export function initFluidSimulation(canvas) {
 
   updateKeywords();
   initFramebuffers();
-  // console.log("Init done, seeding fluid");
+  console.log("Init done, seeding fluid");
   multipleSplats(50);
 
   let lastUpdateTime = Date.now();
@@ -1326,6 +1326,8 @@ export function initFluidSimulation(canvas) {
   }
 
   function render(target) {
+    updateRenderSettings(); // Add this line
+
     if (config.BLOOM) applyBloom(dye.read, bloom);
     if (config.SUNRAYS) {
       applySunrays(dye.read, dye.write, sunrays);
@@ -1345,10 +1347,9 @@ export function initFluidSimulation(canvas) {
 
     let fbo = target == null ? null : target.fbo;
     if (!config.TRANSPARENT) drawColor(fbo, normalizeColor(config.BACK_COLOR));
-    //if (target == null && config.TRANSPARENT)
-    //drawCheckerboard(fbo);
     drawDisplay(fbo, width, height);
   }
+
 
   function drawColor(fbo, color) {
     colorProgram.bind();
@@ -1724,18 +1725,35 @@ export function initFluidSimulation(canvas) {
     }
     if (config.SUNRAYS) gl.uniform1i(displayMaterial.uniforms.uSunrays, sunrays.attach(3));
 
-    // Invert colors if bg is pure white
+    // Ensure proper blending state before drawing
+    gl.enable(gl.BLEND);
+
+    // Handle background color inversion properly
     if (config.BACK_COLOR.r === 255 && config.BACK_COLOR.g === 255 && config.BACK_COLOR.b === 255) {
-      // read current pixels & use blend inverse
-      gl.uniform1i(displayMaterial.uniforms.uTexture, dye.read.attach(0));
-      // Simple trick: flip blending like negative effect
       gl.blendFunc(gl.ONE_MINUS_DST_COLOR, gl.ZERO);
       blit(fbo);
-      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); // reset
+      // CRITICAL: Reset blend function immediately after
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     } else {
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
       blit(fbo);
     }
   }
+
+  function updateRenderSettings() {
+    if (config.TRANSPARENT) {
+      gl.clearColor(0, 0, 0, 0); // Transparent background
+    } else {
+      gl.clearColor(
+        config.BACK_COLOR.r / 255,
+        config.BACK_COLOR.g / 255,
+        config.BACK_COLOR.b / 255,
+        1.0
+      );
+    }
+  }
+
+
   return {
     togglePause: () => {
       config.PAUSED = !config.PAUSED;

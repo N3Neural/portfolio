@@ -10,7 +10,7 @@ export default function FluidCanvas() {
     if (!canvas) return;
 
     const sim: FluidSimInstance = initFluidSimulation(canvas);
-    // console.log("Started simulation");
+    console.log("Started simulation");
     return () => {
       sim.togglePause();
     };
