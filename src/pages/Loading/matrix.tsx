@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 
-const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-const targetWord = "ARSH GOYAL";
+const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const message = "HELLO";
 
 const MatrixRain: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -13,115 +13,116 @@ const MatrixRain: React.FC = () => {
     canvas.height = window.innerHeight;
 
     const fontSize = 30;
-    const columns = Math.floor(canvas.width / fontSize);
-    let drops = Array(columns).fill(0).map(() => Math.random() * canvas.height);
+    const columnCount = Math.floor(canvas.width / fontSize);
+    let columnHeights = Array(columnCount)
+      .fill(0)
+      .map(() => Math.random() * 200);
 
-    const particles: {
+    const dots: {
       x: number;
       y: number;
       char: string;
-      tx?: number;
-      ty?: number;
-      alpha: number;
+      targetX?: number;
+      targetY?: number;
+      opacity: number;
     }[] = [];
 
-    for (let i = 0; i < columns * 40; i++) {
-      particles.push({
+    for (let i = 0; i < columnCount * 40; i++) {
+      dots.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
-        char: chars[Math.floor(Math.random() * chars.length)],
-        alpha: 1,
+        char: letters[Math.floor(Math.random() * letters.length)],
+        opacity: 1,
       });
     }
 
-    const offCanvas = document.createElement("canvas");
-    const offCtx = offCanvas.getContext("2d")!;
-    offCanvas.width = canvas.width;
-    offCanvas.height = canvas.height;
+    const hiddenCanvas = document.createElement("canvas");
+    const hiddenCtx = hiddenCanvas.getContext("2d")!;
+    hiddenCanvas.width = canvas.width;
+    hiddenCanvas.height = canvas.height;
 
-    const fontSizeWord = Math.min(canvas.width * 0.12, canvas.height * 0.2);
-    offCtx.font = `${fontSizeWord}px monospace`;
-    offCtx.textAlign = "center";
-    offCtx.textBaseline = "middle";
-    offCtx.fillStyle = "white";
+    const messageSize = Math.min(canvas.width * 0.12, canvas.height * 0.2);
+    hiddenCtx.font = `${messageSize}px monospace`;
+    hiddenCtx.textAlign = "center";
+    hiddenCtx.textBaseline = "middle";
+    hiddenCtx.fillStyle = "white";
 
-    const letters = targetWord.split("");
-    const spacing = fontSizeWord * 0.75;
-    letters.forEach((letter, i) => {
-      const xPos = canvas.width / 2 - (letters.length / 2) * spacing + i * spacing + spacing / 2;
-      offCtx.fillText(letter, xPos, canvas.height / 2);
+    const messageChars = message.split("");
+    const spacing = messageSize * 0.75;
+
+    messageChars.forEach((ch, i) => {
+      const x = canvas.width / 2 - (messageChars.length / 2) * spacing + i * spacing + spacing / 2;
+      hiddenCtx.fillText(ch, x, canvas.height / 2);
     });
 
-    // Measure text width for underline
-    const textWidth = offCtx.measureText(targetWord).width;
+    const textWidth = hiddenCtx.measureText(message).width;
+    const pixelData = hiddenCtx.getImageData(0, 0, hiddenCanvas.width, hiddenCanvas.height).data;
 
-    const pixels = offCtx.getImageData(0, 0, offCanvas.width, offCanvas.height).data;
     const targets: { x: number; y: number }[] = [];
-    for (let y = 0; y < offCanvas.height; y += 4) {
-      for (let x = 0; x < offCanvas.width; x += 4) {
-        const idx = (y * offCanvas.width + x) * 4 + 3;
-        if (pixels[idx] > 128) targets.push({ x, y });
+    for (let y = 0; y < hiddenCanvas.height; y += 4) {
+      for (let x = 0; x < hiddenCanvas.width; x += 4) {
+        const index = (y * hiddenCanvas.width + x) * 4 + 3;
+        if (pixelData[index] > 128) targets.push({ x, y });
       }
     }
 
-    let converging = false;
-    let underlineProgress = 0;
-    let fadeUp = false;
-    let fadeOffset = 0;
+    let mergePhase = false;
+    let underlineGrow = 0;
+    let fadePhase = false;
+    let fadeShift = 0;
 
     setTimeout(() => {
-      converging = true;
-      particles.forEach((p, i) => {
-        const t = targets[i % targets.length];
-        p.tx = t.x;
-        p.ty = t.y;
+      mergePhase = true;
+      dots.forEach((dot, i) => {
+        const { x, y } = targets[i % targets.length];
+        dot.targetX = x;
+        dot.targetY = y;
       });
     }, 1500);
 
     const fps = 25;
-    const interval = 1000 / fps;
-    let lastTime = 0;
+    const frameSpacing = 1000 / fps;
+    let lastFrame = 0;
 
-    function animate(time: number) {
-      requestAnimationFrame(animate);
-      if (time - lastTime < interval) return;
-      lastTime = time;
+    function draw(now: number) {
+      requestAnimationFrame(draw);
+      if (now - lastFrame < frameSpacing) return;
+      lastFrame = now;
 
-      if (!fadeUp) {
+      if (!fadePhase) {
         ctx.fillStyle = "rgba(0,0,0,0.25)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
         ctx.font = `${fontSize}px monospace`;
 
-        if (!converging) {
+        if (!mergePhase) {
           ctx.fillStyle = "#0F0";
-          drops.forEach((y, i) => {
-            const char = chars[Math.floor(Math.random() * chars.length)];
+          columnHeights.forEach((height, i) => {
+            const char = letters[Math.floor(Math.random() * letters.length)];
             const x = i * fontSize;
-            ctx.fillText(char, x, y * fontSize);
-            drops[i] = y * fontSize > canvas.height && Math.random() > 0.975 ? 0 : y + 1;
+            ctx.fillText(char, x, height * fontSize);
+            columnHeights[i] = height * fontSize > canvas.height && Math.random() > 0.975 ? 0 : height + 1;
           });
         } else {
-          for (let p of particles) {
-            if (p.tx !== undefined && p.ty !== undefined && p.alpha > 0) {
-              p.x += (p.tx - p.x) * 0.25;
-              p.y += (p.ty - p.y) * 0.25;
+          for (let dot of dots) {
+            if (dot.targetX !== undefined && dot.targetY !== undefined && dot.opacity > 0) {
+              dot.x += (dot.targetX - dot.x) * 0.25;
+              dot.y += (dot.targetY - dot.y) * 0.25;
             }
 
-            if (p.alpha > 0) {
-              ctx.fillStyle = `rgba(0,255,0,${p.alpha})`;
-              ctx.fillText(p.char, p.x, p.y);
+            if (dot.opacity > 0) {
+              ctx.fillStyle = `rgba(0,255,0,${dot.opacity})`;
+              ctx.fillText(dot.char, dot.x, dot.y);
             }
           }
 
-          underlineProgress += 0.02;
-          if (underlineProgress > 1) {
-            underlineProgress = 1;
-            fadeUp = true;
+          underlineGrow += 0.02;
+          if (underlineGrow > 1) {
+            underlineGrow = 1;
+            fadePhase = true;
           }
 
-          const underlineY = canvas.height / 2 + fontSizeWord / 2 + 20;
-          const underlineWidth = textWidth * underlineProgress;
+          const underlineY = canvas.height / 2 + messageSize / 2 + 20;
+          const underlineWidth = textWidth * underlineGrow;
 
           ctx.save();
           ctx.strokeStyle = "lime";
@@ -135,15 +136,14 @@ const MatrixRain: React.FC = () => {
           ctx.restore();
         }
       } else {
-        // Fade everything upwards
-        fadeOffset += 2; // speed of upward fade
-        ctx.drawImage(canvas, 0, -fadeOffset, canvas.width, canvas.height);
+        fadeShift += 2;
+        ctx.drawImage(canvas, 0, -fadeShift, canvas.width, canvas.height);
         ctx.fillStyle = "rgba(0,0,0,0.05)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
     }
 
-    requestAnimationFrame(animate);
+    requestAnimationFrame(draw);
 
     window.addEventListener("resize", () => {
       canvas.width = window.innerWidth;
