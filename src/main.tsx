@@ -79,7 +79,7 @@ const App = () => {
       return () => clearTimeout(timer)
     }
     if (phase === 'matrix') {
-      const timer = setTimeout(() => setPhase('main'), 6000)
+      const timer = setTimeout(() => setPhase('main'), 5000)
       return () => clearTimeout(timer)
     }
   }, [phase])
