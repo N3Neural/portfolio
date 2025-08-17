@@ -1,31 +1,27 @@
 import { StrictMode, useState, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import Sequence from './pages/Loading/loading'
+import LoadingScreen from './pages/Loading/loading'
 import MainScreen from './pages/MainScreen/MainScreen'
 
-function WebGLFluidSimulation() {
+function FluidCanvas() {
   useEffect(() => {
-    // Load dat.gui
-    const datGui = document.createElement("script")
-    datGui.src = "/dat.gui.min.js"
-    datGui.async = true
-    document.body.appendChild(datGui)
+    const canvas = document.getElementById("fluid-canvas")
+    if (!canvas) return
 
-    // Load fluid simulation script
     const script = document.createElement("script")
     script.src = "/script.js"
     script.async = true
     document.body.appendChild(script)
 
+    const gui = document.createElement("script")
+    gui.src = "/dat.gui.min.js"
+    gui.async = true
+    document.body.appendChild(gui)
+
     return () => {
-      // Clean up scripts on unmount
-      if (document.body.contains(script)) {
-        document.body.removeChild(script)
-      }
-      if (document.body.contains(datGui)) {
-        document.body.removeChild(datGui)
-      }
+      if (document.body.contains(script)) document.body.removeChild(script)
+      if (document.body.contains(gui)) document.body.removeChild(gui)
     }
   }, [])
 
@@ -38,43 +34,70 @@ function WebGLFluidSimulation() {
         position: "fixed",
         top: 0,
         left: 0,
-        zIndex: 1, // Changed from -1 to 1
-        cursor: "default",
+        zIndex: 0,
+        cursor: "none",
+      }}
+    />
+  )
+}
+
+const DotCursor = () => {
+  const [position, setPosition] = useState({ x: -100, y: -100 })
+
+  useEffect(() => {
+    const handleMouse = (e: MouseEvent) => {
+      setPosition({ x: e.clientX, y: e.clientY })
+    }
+    window.addEventListener("mousemove", handleMouse)
+    return () => window.removeEventListener("mousemove", handleMouse)
+  }, [])
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: position.y - 8,
+        left: position.x - 8,
+        width: 16,
+        height: 16,
+        borderRadius: "50%",
+        backgroundColor: "rgba(255,255,255,0.4)",
+        boxShadow: "0 0 10px rgba(255,255,255,0.6)",
+        pointerEvents: "none",
+        zIndex: 9999,
       }}
     />
   )
 }
 
 const App = () => {
-  const [currentPhase, setCurrentPhase] = useState<'explosion' | 'matrix' | 'main'>('explosion');
+  const [phase, setPhase] = useState<'explosion' | 'matrix' | 'main'>('explosion')
 
   useEffect(() => {
-    if (currentPhase === 'explosion') {
-      const timer = setTimeout(() => {
-        setCurrentPhase('matrix');
-      }, 2700);
-      return () => clearTimeout(timer);
-    } else if (currentPhase === 'matrix') {
-      const timer = setTimeout(() => {
-        setCurrentPhase('main');
-      }, 4500); // Matrix runs for exactly 3 seconds
-      return () => clearTimeout(timer);
+    if (phase === 'explosion') {
+      const timer = setTimeout(() => setPhase('matrix'), 2700)
+      return () => clearTimeout(timer)
     }
-  }, [currentPhase]);
+    if (phase === 'matrix') {
+      const timer = setTimeout(() => setPhase('main'), 4500)
+      return () => clearTimeout(timer)
+    }
+  }, [phase])
 
   return (
-    <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
-      {currentPhase === 'explosion' && <Sequence showExplosion={true} showMatrix={false} />}
-      {currentPhase === 'matrix' && <Sequence showExplosion={false} showMatrix={true} />}
-      {currentPhase === 'main' && (
+    <div style={{ position: "relative", width: "100vw", height: "100vh", cursor: "none" }}>
+      {phase === 'explosion' && <LoadingScreen showExplosion showMatrix={false} />}
+      {phase === 'matrix' && <LoadingScreen showExplosion={false} showMatrix />}
+      {phase === 'main' && (
         <>
-          <WebGLFluidSimulation />
+          <FluidCanvas />
           <MainScreen />
+          <DotCursor />
         </>
       )}
     </div>
-  );
-};
+  )
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

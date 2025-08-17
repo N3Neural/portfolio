@@ -13,7 +13,7 @@ let config = {
   PRESSURE_ITERATIONS: 20,
   CURL: 30,
   SPLAT_RADIUS: 0.1,
-  SPLAT_FORCE: 1500,
+  SPLAT_FORCE: 500,
   SHADING: true,
   COLORFUL: true,
   COLOR_UPDATE_SPEED: 10,
@@ -177,10 +177,10 @@ function hexToRgb(hex) {
   let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
     ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16),
-      }
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16),
+    }
     : null;
 }
 
@@ -1472,9 +1472,9 @@ function splatPointer(pointer) {
 function multipleSplats(amount) {
   for (let i = 0; i < amount; i++) {
     const color = generateColor();
-    color.r *= 10.0;
-    color.g *= 10.0;
-    color.b *= 10.0;
+    color.r *= 5.0;
+    color.g *= 5.0;
+    color.b *= 5.0;
     const x = Math.random();
     const y = Math.random();
     const dx = 1000 * (Math.random() - 0.5);
@@ -1507,14 +1507,16 @@ function correctRadius(radius) {
   return radius;
 }
 
-// window.addEventListener('mousedown', e => {
-//     let posX = scaleByPixelRatio(e.offsetX);
-//     let posY = scaleByPixelRatio(e.offsetY);
-//     let pointer = pointers.find(p => p.id == -1);
-//     if (pointer == null)
-//         pointer = new pointerPrototype();
-//     updatePointerDownData(pointer, -1, posX, posY);
-// });
+window.addEventListener("mousedown", (e) => {
+  // let posX = scaleByPixelRatio(e.offsetX);
+  // let posY = scaleByPixelRatio(e.offsetY);
+  let rect = canvas.getBoundingClientRect();
+  let posX = (e.clientX - rect.left) * (canvas.width / rect.width);
+  let posY = (e.clientY - rect.top) * (canvas.height / rect.height);
+  let pointer = pointers[0] || new pointerPrototype();
+  updatePointerDownData(pointer, -1, posX, posY);
+});
+
 let lastMove = -1;
 function checkLastMove() {
   const currentMove = window.performance.now();
@@ -1526,18 +1528,22 @@ function checkLastMove() {
 }
 
 window.addEventListener("mousemove", (e) => {
-  if (checkLastMove()) {
-    let posX = scaleByPixelRatio(e.offsetX);
-    let posY = scaleByPixelRatio(e.offsetY);
-    let pointer = pointers.find((p) => p.id == -1);
-    if (pointer == null) pointer = new pointerPrototype();
-    updatePointerDownData(pointer, -1, posX, posY);
-  }
+  // if (checkLastMove()) {
+  //   let posX = scaleByPixelRatio(e.offsetX);
+  //   let posY = scaleByPixelRatio(e.offsetY);
+  //   let pointer = pointers.find((p) => p.id == -1);
+  //   if (pointer == null) pointer = new pointerPrototype();
+  //   updatePointerDownData(pointer, -1, posX, posY);
+  // }
 
   let pointer = pointers[0];
-  if (!pointer.down) return;
-  let posX = scaleByPixelRatio(e.offsetX);
-  let posY = scaleByPixelRatio(e.offsetY);
+  pointer.down = true;
+  // if (!pointer.down) return;
+  // let posX = scaleByPixelRatio(e.offsetX);
+  // let posY = scaleByPixelRatio(e.offsetY);
+  let rect = canvas.getBoundingClientRect();
+  let posX = (e.clientX - rect.left) * (canvas.width / rect.width);
+  let posY = (e.clientY - rect.top) * (canvas.height / rect.height);
   updatePointerMoveData(pointer, posX, posY);
 });
 
