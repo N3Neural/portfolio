@@ -3,61 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import LoadingScreen from './pages/Loading/loading'
 import MainScreen from './pages/MainScreen/MainScreen'
-
-function FluidCanvas() {
-  useEffect(() => {
-    const canvas = document.getElementById("fluid-canvas")
-    if (!canvas) return
-
-    const gui = document.createElement("script")
-    gui.src = "/dat.gui.min.js"
-    gui.async = true
-    document.body.appendChild(gui)
-
-    const script = document.createElement("script")
-    script.src = "/script.js"
-    script.async = true
-    document.body.appendChild(script)
-
-
-    return () => {
-      if (document.body.contains(script)) document.body.removeChild(script)
-      if (document.body.contains(gui)) document.body.removeChild(gui)
-    }
-  }, [])
-
-  return (
-    <canvas
-      id="fluid-canvas"
-      style={{
-        width: "100%",
-        height: "100%",
-        position: "fixed",
-        top: 0,
-        left: 0,
-        zIndex: 0,
-        cursor: "none",
-      }}
-    />
-  )
-}
-
-// function FluidCanvas() {
-//   return (
-//     <canvas
-//       id="fluid-canvas"
-//       style={{
-//         width: "100%",
-//         height: "100%",
-//         position: "fixed",
-//         top: 0,
-//         left: 0,
-//         zIndex: 0,
-//         cursor: "none",
-//       }}
-//     />
-//   );
-// }
+import FluidCanvas from './components/cursor/FluidCursor'
 
 const DotCursor = () => {
   const [position, setPosition] = useState({ x: -100, y: -100 })
