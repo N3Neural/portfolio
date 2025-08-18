@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import ExplodingImage from "./shrink";
 import MatrixOutlineWord from "./matrix";
 
